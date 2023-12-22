@@ -58,6 +58,7 @@ func findContainerRuntimes(root fs.FS) runtimeConfigs {
 	findCRunContainerRuntime(root, foundRuntimes)
 	findNvidiaContainerRuntimes(root, foundRuntimes)
 	findWasiRuntimes(root, foundRuntimes)
+	findGvisorRuntimes(root, foundRuntimes)
 	return foundRuntimes
 }
 
@@ -76,6 +77,29 @@ func findCRunContainerRuntime(root fs.FS, foundRuntimes runtimeConfigs) {
 		"crun": {
 			RuntimeType: "io.containerd.runc.v2",
 			BinaryName:  "crun",
+		},
+	}
+
+	searchForRuntimes(root, potentialRuntimes, locationsToCheck, foundRuntimes)
+}
+
+// findGvisorContainerRuntime finds if gvisor is available in the system and adds to foundRuntimes
+// Can be installed either manually, /usr/local/bin by default
+// Or by deb packages, will go to /usr/bin/
+func findGvisorContainerRuntime(root fs.FS, foundRuntimes runtimeConfigs) {
+	// Check these locations in order.
+	locationsToCheck := []string{
+		"usr/bin",       // path when installing from deb packages
+		"usr/local/bin", // recommended path when installing manually
+	}
+
+	// Fill in the binary location with just the name of the binary,
+	// and check against each of the possible locations. If a match is found,
+	// set the location to the full path.
+	potentialRuntimes := runtimeConfigs{
+		"gvisor": {
+			RuntimeType: "io.containerd.runsc.v1",
+			BinaryName:  "runsc",
 		},
 	}
 
